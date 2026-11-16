@@ -66,7 +66,7 @@ def parse_config(path):
     for i, r in enumerate(rows):
         if int(r[0]) != i:
             raise ValueError(f"{where}: row {i + 1} is channel {r[0]}; this tool needs the joints on PCA9685 channels 0-4 in "
-                             "kinematic order (base 0, shoulder 1, elbow 2, wrist 3, roll 4, gripper 5). Rewire, or tell Tico")
+                             "kinematic order (base 0, shoulder 1, elbow 2, wrist 3, roll 4, gripper 5). Rewire the servos to match")
         if r[1] != "ROT":
             raise ValueError(f"{where}: channel {i} is J_{r[1]}; all five joints must be rotary (J_ROT)")
         if not (int(r[4]) < int(r[5])):

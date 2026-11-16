@@ -14,12 +14,12 @@ keeps a colored block centered in its gripper camera, using the camera as its on
 | 2 | Install the software and download this repository | 30 min |
 | 3 | Wire the servo board and check it | 15 min |
 | 4 | Map your arm's joints with `servo_tester` and write your `robot_config.h` | 60–90 min |
-| 5 | Mount the camera | 10 min |
+| 5 | Mount the camera and describe where it is | 20 min |
 | 6 | Upload `servo_bridge` | 5 min |
 | 7 | Run the notebook on the simulator (no hardware) | 10 min |
 | 8 | Run the notebook on your arm | 45 min |
 | 9 | Troubleshooting | |
-| 10 | Getting updates, sharing your results | |
+| 10 | Getting updates | |
 
 **Status.** The tracking notebook ran on Sir Pinch-a-lot on 2026-11-15 and the demo was recorded.
 Three pieces are new and have only been tested on a PC simulation so far:
@@ -28,8 +28,8 @@ Three pieces are new and have only been tested on a PC simulation so far:
 - `servo_bridge` v0.3, which takes your arm's limits from your `robot_config.h`;
 - the input-shaping cell, C.4.
 
-Your arm may be the first real test of them. Go slowly the first time, keep a hand on the servo power
-switch, and report anything odd (part 10).
+Your arm may be the first real test of them. Go slowly the first time and keep a hand on the servo
+power switch.
 
 Words used below: **pulse** = the servo command in microseconds (µs), 500 to 2500, about 1500 in the
 middle; **channel** = the output on the servo board (0 to 15) a servo is plugged into; **Serial Monitor** =
@@ -47,7 +47,7 @@ the Arduino IDE's text window for talking to the board.
 | Arduino Mega 2560 and its USB cable | other boards are not supported by these sketches |
 | PCA9685 16-channel servo board (I²C address 0x40, the default) | |
 | A separate servo power supply, 5–6 V, at least 5 A | Never power the servos from the Arduino's 5 V pin: six MG996R can draw several amps |
-| A USB camera on the gripper | Sir Pinch-a-lot uses an HBVCAM 3M1917 V22 board camera on a printed bracket (`gripper_camera_bracket` rev 2.1) on the gripper servo. Ask Tico for the bracket print file. Another small USB camera works if you can fix it to the gripper, looking the same way the gripper points |
+| A small USB camera fixed to the gripper | Any camera and mount of your own. Sir Pinch-a-lot uses an HBVCAM 3M1917 V22 board camera on a printed bracket on the gripper servo, looking the way the gripper points. Part 5 shows how to describe your mount to the notebook |
 | A block of one bright color | Sir Pinch-a-lot's is a green painted wooden cube, 24.8 mm per side. Green or blue is easiest; red is hard near skin and wood |
 | For mapping (part 4): a phone with a level app, a ruler, tape, a sheet of paper | iPhone: the Measure app has a Level. Android: any "bubble level" app that shows degrees |
 
@@ -307,32 +307,63 @@ against the arm: for example, the shoulder's range should include +90 (upper arm
 pose (0, 90, −45, −45, 0) must be inside every joint's range. If something is missing or wrong in the
 file, `load_config` says what.
 
-### 4.8 Save your robot file in the repository
+### 4.8 Keep your robot file
 
-If Tico has added you as a collaborator on GitHub:
-```
-cd /d C:\Users\<you>\Desktop\WPy64-312101\notebooks\rot3u-finalproject
-git switch -c robot-don-pinzas
-git add robots/don_pinzas/robot_config.h
-git commit -m "robots: don_pinzas robot_config.h from servo_tester"
-git push -u origin robot-don-pinzas
-```
-Then open the pull request link git prints. Otherwise, send the file to Tico.
+Your `robots\<your robot>\` folder is new to git, so `git pull` (part 10) never changes or removes it.
+Keep a copy elsewhere too if you like.
 
 ---
 
-## 5. Mount the camera
+## 5. Mount the camera and describe where it is
 
-1. Fix the camera to the gripper so it looks the same way the gripper points (along the jaws), above
-   the jaws, with the USB cable slack through every joint's full travel (turn the base by hand both ways
-   with the servo power off to check).
-2. **Which side is up.** With roll 0, Sir Pinch-a-lot's gripper servo, and the camera mounted on it, sit
-   **on top** of the gripper. If on your arm they are underneath at roll 0, use `ROLL_DEG = 180` in the
-   notebook's settings (cell 0.1), and change the camera mount there to
-   `pos_5=(-29.5, 0.0, -55.0), up_5=(-1.0, 0.0, 0.0), right_5=(0.0, -1.0, 0.0)`.
-3. A different camera or bracket: the mount numbers in cell 0.1 (`MOUNT`) are where the lens sits in the
-   gripper's frame, in mm. They only affect the overlay (the gripper's axis drawn on the picture) and the
-   distance estimate, not the tracking. Section C.2 of the notebook checks them.
+The tracking itself does not need to know where the camera is: section C.1 measures how each joint moves
+the picture. The mount numbers are used for the overlay (the gripper's axis and x5/y5 arrows drawn on the
+picture), the distance estimate, and the start-pose pictures. They live in cell 0.1 as `MOUNT`; the code
+behind them is `CameraMount` in `python/rot3u_demo4/geometry.py`, which you can change for your set-up.
+
+### 5.1 Mount it
+
+1. Fix the camera to the gripper (the part that turns with the wrist roll), looking roughly the way the
+   jaws point, with a clear view past the jaws.
+2. Leave the USB cable slack through every joint's full travel: with the servo power off, turn the base
+   and bend each joint by hand to both ends and watch the cable.
+
+### 5.2 The gripper's frame (DH frame 5)
+
+Put the arm, by hand or with `servo_tester`, so the gripper is **level and pointing straight forward**,
+with the wrist roll at **0** (the angle you mapped as 0 in 4.4). In that position:
+
+| Axis | Direction | Origin |
+| --- | --- | --- |
+| z5 | forward, along the gripper toward the jaw tips | the grasp point: between the closed jaws, where they touch a block |
+| x5 | straight up | |
+| y5 | to the robot's right (when you stand behind it, facing the way it points) | |
+
+### 5.3 Measure and fill in `MOUNT`
+
+All in mm, from the grasp point to the center of the camera's lens:
+
+1. `pos_5 = (up, right, forward)`: how far the lens is **above** the gripper's axis (x5), to the
+   **right** of it (y5), and **ahead** of the grasp point (z5; negative when the lens is behind it,
+   which is usual). Sir Pinch-a-lot: `(29.5, 0.0, -55.0)`, 29.5 mm above and 55 mm behind.
+2. `up_5` and `right_5`: which frame-5 directions point to the **top** and the **right** of the picture as
+   the notebook shows it (after the rotate/flip you set in the color picker, part 8), in the position of 5.2:
+
+   | The picture shows the scene | up_5 | right_5 |
+   | --- | --- | --- |
+   | upright (the usual case) | (1, 0, 0) | (0, 1, 0) |
+   | upside down | (-1, 0, 0) | (0, -1, 0) |
+   | upright, camera tilted down by an angle a (degrees) from the gripper's axis | (cos a, 0, sin a) | (0, 1, 0) |
+
+   Fix the picture's rotation in the picker first, so the scene appears upright: then the first row applies,
+   unless the camera is tilted.
+3. `f_px`: the camera's focal length in pixels, at `ref_width` pixels wide (640). To measure it: put the
+   block at a measured distance Z (mm) straight in front of the lens; section C.2 prints the block's size in
+   pixels (s). Then `f_px = s × Z / BLOCK_MM`. The color picker's lens tool also gives it.
+
+If the camera is underneath the gripper at roll 0, you can either keep it there (pos_5 has a negative first
+number) or turn the gripper over in the poses with `ROLL_DEG = 180` in cell 0.1. The `MOUNT` numbers are the
+same either way: they are measured at roll 0, and the camera turns with the gripper.
 
 ---
 
@@ -376,7 +407,8 @@ order. Here is the path through it, with what is specific to a new arm.
    - `ROBOT_CONFIG = "../robots/don_pinzas/robot_config.h"` (your folder);
    - `OBJECT` and `ROOM` to name your block and where you are, for example `"blue cube #1"`, `"lab"`;
    - `BLOCK_MM` to your block's side in mm;
-   - `DEFAULT_CAMERA`'s `index` to your camera's number if you know it (A.5a lists them).
+   - `DEFAULT_CAMERA`'s `index` to your camera's number if you know it (A.5a lists them);
+   - `MOUNT` to your camera's numbers (part 5.3).
 
    Run the cell. Run it again after every change.
 2. **0.2** loads your robot file and prints it. Check it as in 4.7.
@@ -420,17 +452,22 @@ order. Here is the path through it, with what is specific to a new arm.
 
 ---
 
-## 10. Getting updates, sharing your results
+## 10. Getting updates
 
-- **Updates:** in the Command Prompt,
-  ```
-  cd /d C:\Users\<you>\Desktop\WPy64-312101\notebooks\rot3u-finalproject
-  git pull
-  ```
-  then in Jupyter **Kernel > Restart**, and run from 0.1. If `git pull` complains about local changes to the
-  notebook, you edited it: `git restore python/demo4_tracking.ipynb` discards your edits to the notebook
-  (your settings are the only edits; note them first). Your profiles, captures and logs are not touched.
-- **Sharing:** your `robot_config.h` (4.8), the `python\logs\<stamp>_session.json` of a good run, and any
-  error text, sent to Tico or as a pull request.
+In the Command Prompt:
+```
+cd /d C:\Users\<you>\Desktop\WPy64-312101\notebooks\rot3u-finalproject
+git pull
+```
+then in Jupyter **Kernel > Restart**, and run from 0.1.
+
+If `git pull` complains about local changes, you edited a file that the update also changes, usually the
+notebook (your settings in 0.1) or a file in `rot3u_demo4`:
+1. Note your settings.
+2. `git stash` puts your edits aside; `git pull` gets the update; `git stash pop` puts your edits back.
+3. If `git stash pop` reports a conflict, `git checkout --theirs python/demo4_tracking.ipynb` keeps the new
+   notebook (then type your settings in again), and `git stash drop` clears the stash.
+
+Your robot folder, profiles, captures and logs are not touched by `git pull`.
 
 Prepared with assistance from AI.
