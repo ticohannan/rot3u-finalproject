@@ -3,9 +3,9 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 # run output: logs and recorded video stay on the laptop
-python/logs/
-python/videos/
+demo4/logs/
+demo4/videos/
 *.mp4
 # PC build of the sketch for the tests
-python/tests/sim/sim_servo_bridge
-python/tests/sim/sim_servo_bridge.exe
+demo4/tests/sim/sim_servo_bridge
+demo4/tests/sim/sim_servo_bridge.exe

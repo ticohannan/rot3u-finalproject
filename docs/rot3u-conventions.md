@@ -35,7 +35,7 @@ Column order note: `robotica` and exam DH tables use r, α, d, θ.
 - Home (all angles 0): arm straight out horizontally; grasp point at
   (`ARM_R2` + `ARM_R3` + `ARM_TIP` − grip depth, 0, `ARM_D1`).
 
-Reference implementations: `tools/rot3u_kin.py` in `rot3u-robots`; `python/rot3u_demo4/geometry.py` here.
+Reference implementations: `tools/rot3u_kin.py` in `rot3u-robots`; `demo4/rot3u_demo4/geometry.py` here.
 
 ## 2. Joint angle conventions — what to measure
 

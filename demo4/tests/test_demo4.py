@@ -611,7 +611,7 @@ def test_threaded_link_realtime_sim():
 
 
 def test_notebook_runs_on_the_simulator():
-    """Runs demo4_tracking.ipynb with PORT = "SIM" in a copy of the python folder (logs, videos and profiles
+    """Runs demo4_tracking.ipynb with PORT = "SIM" in a copy of the demo4 folder (logs, videos and profiles
     written there, not here). The live k-slider cells (A.7) are left out."""
     try:
         import nbformat

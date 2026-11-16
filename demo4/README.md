@@ -1,4 +1,4 @@
-# Robot Demo 4, Python side: `rot3u_demo4` v0.3.0
+# Robot Demo 4: `rot3u_demo4` v0.3.0 and `demo4_tracking.ipynb`
 
 Copyright (c) 2026 Tico Hannan. BSD-3-Clause.
 

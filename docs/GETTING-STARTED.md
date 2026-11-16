@@ -2,8 +2,8 @@
 
 **Version:** 1.0
 **Updated:** 2026-11-16
-**Applies to:** `firmware/servo_tester` v3.0, `firmware/servo_bridge` v0.3, `python/rot3u_demo4` v0.3.0 and
-`python/demo4_tracking.ipynb`, on a Windows 10/11 laptop
+**Applies to:** `firmware/servo_tester` v3.0, `firmware/servo_bridge` v0.3, `demo4/rot3u_demo4` v0.3.0 and
+`demo4/demo4_tracking.ipynb`, on a Windows 10/11 laptop
 
 This guide starts from nothing: no software installed, no tools of ours seen before. At the end your arm
 keeps a colored block centered in its gripper camera, using the camera as its only sensor.
@@ -92,7 +92,7 @@ Jupyter and the packages below), and the color picker (`ticohannan/camera-color-
    git clone https://github.com/ticohannan/rot3u-finalproject.git
    ```
    Replace the path with your WinPython folder.
-2. Check: `dir rot3u-finalproject` lists `docs`, `firmware`, `python`, `robots` and `README.md`.
+2. Check: `dir rot3u-finalproject` lists `demo4`, `docs`, `firmware`, `robots` and `README.md`.
 
 What is where:
 
@@ -101,7 +101,7 @@ What is where:
 | `firmware/servo_tester/` | Sketch for mapping the joints (part 4) |
 | `firmware/servo_bridge/` | Sketch the notebook drives (part 6) |
 | `robots/` | One `robot_config.h` per arm: `sir_pinch_a_lot_revB/`, `template/`, and yours (part 4) |
-| `python/` | The notebook `demo4_tracking.ipynb` and its package `rot3u_demo4` |
+| `demo4/` | Robot Demo 4: the notebook `demo4_tracking.ipynb` and its package `rot3u_demo4`. Later versions of the demo (more joints) get folders of their own next to it |
 | `docs/` | This guide, the full joint-mapping guide, the angle conventions |
 
 ---
@@ -319,7 +319,7 @@ Keep a copy elsewhere too if you like.
 The tracking itself does not need to know where the camera is: section C.1 measures how each joint moves
 the picture. The mount numbers are used for the overlay (the gripper's axis and x5/y5 arrows drawn on the
 picture), the distance estimate, and the start-pose pictures. They live in cell 0.1 as `MOUNT`; the code
-behind them is `CameraMount` in `python/rot3u_demo4/geometry.py`, which you can change for your set-up.
+behind them is `CameraMount` in `demo4/rot3u_demo4/geometry.py`, which you can change for your set-up.
 
 ### 5.1 Mount it
 
@@ -386,7 +386,7 @@ always move the arm through the notebook, not by typing in the Serial Monitor.
 This checks the installation without touching the arm.
 
 1. In the WinPython folder, start **Jupyter Lab.exe** (or **Jupyter Notebook.exe**). A browser tab opens.
-2. Open `rot3u-finalproject` → `python` → `demo4_tracking.ipynb`.
+2. Open `rot3u-finalproject` → `demo4` → `demo4_tracking.ipynb`.
 3. In the first code cell (0.1 Settings), change `PORT = "COM3"` to `PORT = "SIM"`.
 4. **Run > Run All Cells**. It takes about 4 minutes. The picker cells say "simulator: skipped".
 5. Expected at the end: section D.3 prints `{'CENTERED': ..., 'TRACK': ...}`, D.5 prints `saved logs/..._session.json`.
@@ -418,7 +418,7 @@ order. Here is the path through it, with what is specific to a new arm.
      "shotgun" captures (6 to 10 captures of the same block at different angles and places in the picture);
    - stop the picker with the second A.2 cell;
    - A.3 shows the captures; uncheck bad ones; the next cell builds and saves your profile in
-     `python\profiles\`.
+     `demo4\profiles\`.
 
    Then **A.4** opens the camera with the profile. **A.6** must show your block, and almost nothing else,
    white in the mask. A.5 (diagnostics) and A.7 (fine-tuning the color range) are for when something is off.
@@ -431,7 +431,7 @@ order. Here is the path through it, with what is specific to a new arm.
    smoothing that cancels it.
 6. **Part D, tracking.** D.1 builds the tracker, D.3 tracks with base and wrist: move the block, hold it,
    wait for `CENTERED`. Press **q** in the window to stop. D.5 saves a summary of the session in
-   `python\logs\`.
+   `demo4\logs\`.
 
 ---
 
@@ -465,7 +465,7 @@ If `git pull` complains about local changes, you edited a file that the update a
 notebook (your settings in 0.1) or a file in `rot3u_demo4`:
 1. Note your settings.
 2. `git stash` puts your edits aside; `git pull` gets the update; `git stash pop` puts your edits back.
-3. If `git stash pop` reports a conflict, `git checkout --theirs python/demo4_tracking.ipynb` keeps the new
+3. If `git stash pop` reports a conflict, `git checkout --theirs demo4/demo4_tracking.ipynb` keeps the new
    notebook (then type your settings in again), and `git stash drop` clears the stash.
 
 Your robot folder, profiles, captures and logs are not touched by `git pull`.
