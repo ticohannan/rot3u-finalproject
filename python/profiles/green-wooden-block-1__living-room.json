@@ -1,0 +1,75 @@
+{
+ "object": "green wooden block #1",
+ "room": "living room",
+ "camera": {
+  "index": 1,
+  "name": "HBVCAM camera",
+  "vid": 1423,
+  "pid": 14433,
+  "width": 640,
+  "height": 480,
+  "fps": 30.0,
+  "fmt": null,
+  "orientation": [
+   0,
+   true,
+   true
+  ],
+  "properties": {
+   "backend": "DSHOW",
+   "focus": null,
+   "autofocus": null,
+   "zoom": null,
+   "exposure": null,
+   "auto exposure": null,
+   "gain": null,
+   "brightness": 5.0,
+   "contrast": 15.0,
+   "saturation": 32.0,
+   "white balance (K)": null,
+   "auto white balance": 1.0,
+   "sharpness": 4.0,
+   "backlight comp.": 1.0
+  },
+  "measured_fps": 7.58
+ },
+ "color": {
+  "name": "green wooden block #1",
+  "mean": [
+   57.79,
+   202.98,
+   73.99
+  ],
+  "std": [
+   4.78,
+   35.35,
+   46.35
+  ],
+  "k": [
+   2.5,
+   2.5,
+   3.0
+  ],
+  "n": 1758,
+  "sources": [
+   "20261115_222258_174_cam1-HBVCAM-camera.json",
+   "20261115_222403_038_cam1-HBVCAM-camera.json",
+   "20261115_222444_136_cam1-HBVCAM-camera.json",
+   "20261115_222544_015_cam1-HBVCAM-camera.json",
+   "20261115_222600_869_cam1-HBVCAM-camera.json",
+   "20261115_222601_870_cam1-HBVCAM-camera.json"
+  ]
+ },
+ "captures": [
+  "20261115_222258_174_cam1-HBVCAM-camera.json",
+  "20261115_222403_038_cam1-HBVCAM-camera.json",
+  "20261115_222444_136_cam1-HBVCAM-camera.json",
+  "20261115_222544_015_cam1-HBVCAM-camera.json",
+  "20261115_222600_869_cam1-HBVCAM-camera.json",
+  "20261115_222601_870_cam1-HBVCAM-camera.json"
+ ],
+ "created": "2026-11-15 22:26",
+ "notes": "2026-11-15 demo session: 6 Cluster captures at 1280 x 720 YUY2; tracking ran at 640 x 480 (driver default, about 9 frames/s)",
+ "size_mm": 0.0,
+ "tag": "green wooden block #1, in the living room"
+}

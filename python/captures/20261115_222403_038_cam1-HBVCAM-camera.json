@@ -1,0 +1,157 @@
+{
+  "time": "2026-11-15T22:24:03.079",
+  "tool": "camera_color_picker 0.2.0",
+  "source": {
+    "label": "1: HBVCAM camera (058F:3861)",
+    "kind": "camera",
+    "name": "HBVCAM camera",
+    "index": 1,
+    "vid": 1423,
+    "pid": 14433
+  },
+  "requested": "MJPG 1280x720 @ 30",
+  "driver": {
+    "w": 1280,
+    "h": 720,
+    "fps": 30.0,
+    "fmt": "YUY2"
+  },
+  "measured_capture_fps": 7.55,
+  "frozen": false,
+  "orientation": {
+    "rotate_cw_deg": 0,
+    "flip_h": true,
+    "flip_v": true,
+    "order": "flips first, then rotation",
+    "camera_size": [
+      1280,
+      720
+    ],
+    "image_size": [
+      1280,
+      720
+    ]
+  },
+  "crosshair": {
+    "corner": [
+      640,
+      360
+    ],
+    "center": [
+      0,
+      0
+    ],
+    "camera_pixels": [
+      639,
+      359
+    ]
+  },
+  "sampling": {
+    "mode": "Cluster",
+    "diameter": 143,
+    "points": 300,
+    "pattern": "random",
+    "seed": 0,
+    "exclude": false,
+    "k": 2.8000000000000003
+  },
+  "camera_properties": {
+    "backend": "DSHOW",
+    "focus": null,
+    "autofocus": null,
+    "zoom": null,
+    "exposure": null,
+    "auto exposure": null,
+    "gain": null,
+    "brightness": 5.0,
+    "contrast": 15.0,
+    "saturation": 32.0,
+    "white balance (K)": null,
+    "auto white balance": 1.0,
+    "sharpness": 4.0,
+    "backlight comp.": 1.0
+  },
+  "focal": {
+    "frame": [
+      1280,
+      720
+    ],
+    "A": null,
+    "B": null,
+    "ab_px": 0.0,
+    "L_mm": 0.0,
+    "Z_mm": 0.0,
+    "f_px_measured": null,
+    "datasheet_dfov_deg": null,
+    "f_px_datasheet": null,
+    "pixel_pitch_um": null
+  },
+  "readout": "mode=cluster  frame=1280x720  diameter=143px  points kept 293 of 293\ncenter xy_corner=(640, 360)  xy_center=(0, 0)   (x right, y down)\nrange  x 571..709  y 290..429 (corner)   x -69..69  y -70..69 (center)\nmean rgb=(61, 150, 57)  hex=#3D9639\nmean hsv_opencv=(59.1, 167.4, 149.8)  sd=(3.2, 23.1, 44.8)\n# OpenCV inRange (HSV, min..max of kept points)\nlower = (49, 118, 86); upper = (67, 219, 239)",
+  "stats": {
+    "n": 293,
+    "kept": 293,
+    "rows": {
+      "H": {
+        "mean": 59.08659415045593,
+        "std": 3.163297367891768,
+        "min": 49,
+        "max": 67
+      },
+      "S": {
+        "mean": 167.37542662116041,
+        "std": 23.138454250252583,
+        "min": 118,
+        "max": 219
+      },
+      "V": {
+        "mean": 149.7542662116041,
+        "std": 44.796632124720354,
+        "min": 86,
+        "max": 239
+      },
+      "R": {
+        "mean": 61.232081911262796,
+        "std": 33.92252860357235,
+        "min": 17,
+        "max": 160
+      },
+      "G": {
+        "mean": 149.7542662116041,
+        "std": 44.796632124720354,
+        "min": 86,
+        "max": 239
+      },
+      "B": {
+        "mean": 57.310580204778155,
+        "std": 26.8273927299552,
+        "min": 15,
+        "max": 126
+      }
+    },
+    "mean_bgr": [
+      57,
+      150,
+      61
+    ],
+    "inrange": [
+      [
+        [
+          49,
+          118,
+          86
+        ],
+        [
+          67,
+          219,
+          239
+        ]
+      ]
+    ],
+    "wraps": false,
+    "low_sat": "False"
+  },
+  "files": {
+    "raw": "20261115_222403_038_cam1-HBVCAM-camera.png",
+    "annotated": "20261115_222403_038_cam1-HBVCAM-camera_annotated.png"
+  }
+}
