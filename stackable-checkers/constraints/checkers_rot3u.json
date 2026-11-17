@@ -1,0 +1,70 @@
+{
+  "_about": "Starting constraints for stackable checkers moved by Sir Pinch-a-lot (ROT3U arm), as given on 2026-11-13. Every value has a note. Units: mm, degrees, mm/s. Copy template.json for another robot, board or printer.",
+  "name": "checkers_rot3u",
+  "board": {
+    "square_mm": 25.4,
+    "_square_mm": "8 in board with 1 in squares (checkers project plan, 2026-11-04); Tico measured about 25 mm",
+    "pieces_on_diagonals_only": true,
+    "_pieces_on_diagonals_only": "checkers: pieces sit on dark squares, so the nearest neighbors are diagonal"
+  },
+  "piece": {
+    "diameter_mm": 25.0,
+    "_diameter_mm": "Tico's starting choice: about one square",
+    "stack_of": 2,
+    "_stack_of": "a king is two pieces stacked"
+  },
+  "gripper": {
+    "grip_band_min_mm": 10.0,
+    "_grip_band_min_mm": "the fingers need about a 1 cm tall surface (Tico's earlier gripper tests)",
+    "grip_band_max_mm": 15.0,
+    "_grip_band_max_mm": "Tico's suggested band 1-1.5 cm",
+    "finger_thickness_mm": null,
+    "_finger_thickness_mm": "not measured yet; the finger-room check reports the gap and passes only when this is set",
+    "placement_error": {"model": "uniform", "resolution_mm": 10.0},
+    "_placement_error": "about 1 cm resolution at the end effector before any compensation; uniform = each horizontal axis uniform in +-resolution/2. Alternative: {\"model\": \"gaussian\", \"sigma_mm\": ...}"
+  },
+  "goal": {
+    "target_offset_fraction": 0.5,
+    "target_offset_of": "diameter",
+    "_target_offset": "Tico's hope: stack after misalignment up to 50 % (of the diameter here; set target_offset_of to radius for the other reading)",
+    "max_height_mm": 25.0,
+    "_max_height_mm": "Tico preferred the shorter design (S40, 22.1 mm) over N35 (28.7 mm); 25 mm separates them",
+    "seat_rate_required": 0.8,
+    "_seat_rate_required": "used for the 'reliable offset' figure: largest offset with at least this seat rate"
+  },
+  "printer": {
+    "name": "Bambu X2D, PLA, 0.4 nozzle",
+    "layer_mm": 0.2,
+    "_layer_mm": "preset kit 0.20 functional (Tico's X2D printer rules)",
+    "overhang_max_deg": 45.0,
+    "_overhang_max_deg": "from vertical, unsupported (Tico's X2D printer rules)",
+    "bridge_max_mm": 10.0,
+    "_bridge_max_mm": "Tico's X2D printer rules",
+    "min_wall_mm": 0.8,
+    "_min_wall_mm": "two lines with a 0.4 nozzle (Tico's X2D printer rules)",
+    "hole_undersize_mm": [0.1, 0.5],
+    "_hole_undersize_mm": "first coupon: holes printed 0.1-0.5 small (diameter); informs the socket clearance",
+    "od_undersize_mm": 0.2,
+    "_od_undersize_mm": "first coupon: round outer shapes about 0.2 small"
+  },
+  "physics": {
+    "density_g_per_mm3": 0.00124,
+    "_density": "PLA, solid; the settling results do not depend on it",
+    "friction_range": [0.2, 0.4],
+    "_friction_range": "static friction between printed PLA parts measured 0.12-0.38 (Effect of the angle of the laid-up filaments on the coefficient of static friction between parts manufactured by extrusion-based 3D printing); 0.2-0.4 used",
+    "restitution": 0.15,
+    "_restitution": "low, plastic on plastic; results are insensitive to it at these speeds",
+    "release": {
+      "height_above_tip_mm": [0.5, 2.0],
+      "tilt_sigma_deg": 2.0,
+      "sideways_speed_sigma_mm_s": 10.0
+    },
+    "_release": "randomized per release in the Monte Carlo: height uniform, tilt and sideways speed Gaussian (1 sigma). The arm stops before the gripper opens"
+  },
+  "analysis": {
+    "offsets_mm": {"start": 0.0, "stop": 12.5, "step": 0.5},
+    "releases_per_offset": 30,
+    "seed": 1000,
+    "_analysis": "30 releases give about +-18 percentage points (95 %) at a 50 % rate (+-9 at one sigma)"
+  }
+}

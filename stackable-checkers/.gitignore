@@ -1,0 +1,6 @@
+# local run outputs (results/reference is committed)
+results/*
+!results/reference/
+*.zip
+*.egg-info/
+.ipynb_checkpoints/

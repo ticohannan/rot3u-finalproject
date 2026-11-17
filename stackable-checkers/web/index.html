@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stackable pieces — browser tool</title>
+<!-- Stackable pieces study, web tool 0.1.0 (DD-STACK). Open this file in a browser; no install.
+     three.js (cdnjs) is only used for the optional 3D view. Copyright (c) 2026, Tico Hannan. BSD-3-Clause. -->
+<script src="geometry.js"></script>
+<script src="sim2d.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+:root{--bg:#f6f5f1;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--line:#e1e0d9;--axis:#c3c2b7;
+--good:#0ca30c;--warn:#fab219;--serious:#ec835a;--crit:#d03b3b;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a}
+@media (prefers-color-scheme: dark){:root{--bg:#121211;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#8f8e88;--line:#2c2c2a;--axis:#383835;--s1:#3987e5;--s2:#d95926;--s3:#199e70}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1280px;margin:0 auto;padding:20px}
+h1{font-size:22px;margin:0 0 2px}h2{font-size:16px;margin:0 0 8px}.sub{color:var(--ink2);margin:0 0 14px}
+.layout{display:grid;grid-template-columns:330px 1fr;gap:14px}@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:12px}
+fieldset{border:0;border-top:1px solid var(--line);margin:8px 0 0;padding:8px 0 0}legend{font-weight:600;font-size:13px;padding:0 4px 0 0}
+.f{display:grid;grid-template-columns:1fr 92px;gap:4px 8px;align-items:center;font-size:12.5px;color:var(--ink2);margin:3px 0}
+.f input,.f select{width:100%;font:inherit;font-size:12.5px;padding:3px 5px;border:1px solid var(--axis);border-radius:5px;background:var(--surface);color:var(--ink)}
+.btn{border:1px solid var(--axis);background:var(--surface);color:var(--ink);border-radius:7px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:1100px){.grid2{grid-template-columns:1fr}}
+table{border-collapse:collapse;width:100%;font-size:12.5px}th,td{text-align:left;padding:3px 6px;border-bottom:1px solid var(--line)}th{color:var(--ink2);font-weight:600}
+.ok{color:var(--good);font-weight:600}.no{color:var(--crit);font-weight:600}.soft{color:var(--warn);font-weight:600}
+.small{font-size:12.5px;color:var(--ink2)}.err{color:var(--crit);font-weight:600}
+#view3{width:100%;height:300px;border-radius:8px;display:block;background:linear-gradient(#e9eef3,#f7f7f4)}
+@media (prefers-color-scheme: dark){#view3{background:linear-gradient(#1d2228,#151514)}}
+progress{width:220px}svg text{fill:var(--ink);font:11px system-ui,sans-serif}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin:4px 0}
+textarea{width:100%;height:120px;font:12px ui-monospace,Consolas,monospace;border:1px solid var(--axis);border-radius:6px;background:var(--surface);color:var(--ink)}
+#tip{position:fixed;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;z-index:9}
+</style>
+</head>
+<body><main>
+<h1>Stackable pieces — browser tool</h1>
+<p class="sub">Design a stackable piece, check it against the printer and gripper, and simulate releases off center. Same 2D engine as the Python package (<code>stackpieces</code>). Long runs are faster in the notebooks.</p>
+<div class="layout">
+<div>
+ <div class="card">
+  <h2>Inputs</h2>
+  <div class="row"><span class="small">Preset:</span><button class="btn" data-p="S40">S40</button><button class="btn" data-p="N35">N35</button><button class="btn" data-p="CYL">CYL</button></div>
+  <fieldset><legend>Piece</legend><div id="pf"></div></fieldset>
+  <fieldset><legend>Board, gripper, goal</legend><div id="cf1"></div></fieldset>
+  <fieldset><legend>Printer</legend><div id="cf2"></div></fieldset>
+  <fieldset><legend>Physics and analysis</legend><div id="cf3"></div></fieldset>
+  <fieldset><legend>Constraints JSON</legend>
+   <div class="row"><button class="btn" id="cjcopy">Copy</button><label class="btn">Load file<input type="file" id="cjfile" accept=".json" hidden></label><button class="btn" id="cjapply">Apply text below</button></div>
+   <textarea id="cjtext" placeholder="Paste a constraints JSON (constraints/*.json) and press Apply"></textarea>
+  </fieldset>
+ </div>
+</div>
+<div>
+ <div class="grid2">
+  <div class="card"><h2>Section (two stacked)</h2><div id="secsvg"></div><div id="gerr" class="err"></div></div>
+  <div class="card"><h2>3D</h2><canvas id="view3"></canvas><p class="small" id="v3note">Drag to orbit. Needs three.js from the internet.</p></div>
+ </div>
+ <div class="card"><h2>Sizes and checks</h2><div class="grid2"><div id="sizes"></div><div id="checks"></div></div></div>
+ <div class="card"><h2>Stacking rate against offset</h2>
+  <div class="row">
+   <label class="small"><input type="checkbox" id="v_smooth" checked> smooth</label>
+   <label class="small"><input type="checkbox" id="v_layered" checked> printed layers</label>
+   <label class="small"><input type="checkbox" id="v_hybrid"> printed, cone sanded</label>
+   <button class="btn primary" id="run">Run</button><button class="btn" id="stop">Stop</button><progress id="prog" value="0" max="1"></progress><span class="small" id="pmsg"></span>
+  </div>
+  <div class="legend" id="cleg"></div>
+  <svg id="chart" viewBox="0 0 900 360" width="100%"></svg>
+  <div id="cres" class="small"></div>
+ </div>
+ <div class="card"><h2>One release</h2>
+  <div class="row small">
+   offset <input id="o_e" type="number" value="3" step="0.5" style="width:60px"> mm
+   surface <select id="o_v"><option>smooth</option><option selected>layered</option><option>hybrid</option></select>
+   μ <input id="o_mu" type="number" value="0.3" step="0.05" style="width:60px">
+   height <input id="o_d" type="number" value="1" step="0.5" style="width:55px"> mm
+   tilt <input id="o_t" type="number" value="0" step="1" style="width:55px">°
+   sideways <input id="o_v0" type="number" value="0" step="10" style="width:60px"> mm/s
+   <button class="btn primary" id="one">Simulate</button><label><input type="checkbox" id="o_zoom"> zoom</label><span id="o_out"></span>
+  </div>
+  <canvas id="sec" style="width:100%;height:360px;display:block;border-radius:8px;background:var(--bg);margin-top:8px"></canvas>
+ </div>
+ <div class="card"><h2>Export</h2>
+  <div class="row"><button class="btn" id="stlcopy">Copy STL (ASCII)</button><a class="btn" id="stldl" download="piece.stl" href="#">Download STL</a><button class="btn" id="pcopy">Copy piece parameters (JSON)</button><span class="small" id="xmsg"></span></div>
+  <p class="small">For a SolidWorks spec, give the parameters to <code>stackpieces.export.write_partspec</code> (notebook 05). Download works when this page is opened from a file; inside a sandboxed viewer use Copy.</p>
+ </div>
+</div></div>
+<p class="small">stackpieces web tool 0.1.0. Author: Tico Hannan. BSD-3-Clause.</p>
+</main><div id="tip"></div>
+<script>
+'use strict';
+const GEO = window.StackGeom, SIM = window.StackSim2D;
+let C = {board:{square_mm:25.4,pieces_on_diagonals_only:true},piece:{diameter_mm:25,stack_of:2},
+ gripper:{grip_band_min_mm:10,grip_band_max_mm:15,finger_thickness_mm:null,placement_error:{model:'uniform',resolution_mm:10}},
+ goal:{target_offset_fraction:0.5,target_offset_of:'diameter',max_height_mm:25,seat_rate_required:0.8},
+ printer:{name:'Bambu X2D, PLA, 0.4 nozzle',layer_mm:0.2,overhang_max_deg:45,bridge_max_mm:10,min_wall_mm:0.8,hole_undersize_mm:[0.1,0.5],od_undersize_mm:0.2},
+ physics:{density_g_per_mm3:0.00124,friction_range:[0.2,0.4],restitution:0.15,release:{height_above_tip_mm:[0.5,2],tilt_sigma_deg:2,sideways_speed_sigma_mm_s:10}},
+ analysis:{offsets_mm:{start:0,stop:12.5,step:0.5},releases_per_offset:10,seed:1000}, name:'browser'};
+let P = Object.assign({}, GEO.PRESETS.S40), G = null;
+const PF = {shoulder:['D','band_h','shoulder','tip_d','alpha','clr','vclr','ct','cb'], nesting:['D','band_h','tip_d','alpha','land','vclr','ctip','cb'], cylinder:['D','band_h','ct','cb']};
+const PL = {D:'diameter D',band_h:'grip band height',shoulder:'shoulder width',tip_d:'tip diameter',alpha:'cone half-angle (deg)',clr:'socket radial clearance',vclr:'tip-to-roof gap',ct:'top chamfer',cb:'bottom chamfer',land:'socket mouth land',ctip:'roof radial clearance'};
+const CF = [['cf1',[['board.square_mm','square'],['gripper.grip_band_min_mm','grip band min'],['gripper.grip_band_max_mm','grip band max'],['gripper.finger_thickness_mm','finger thickness (blank = unknown)'],['gripper.placement_error.resolution_mm','placement resolution (uniform)'],['goal.target_offset_fraction','goal offset fraction'],['goal.target_offset_of','of (diameter / radius)'],['goal.max_height_mm','max height'],['goal.seat_rate_required','required seat rate']]],
+  ['cf2',[['printer.layer_mm','layer height'],['printer.overhang_max_deg','overhang max (deg)'],['printer.bridge_max_mm','bridge max'],['printer.min_wall_mm','min wall']]],
+  ['cf3',[['physics.friction_range.0','friction min'],['physics.friction_range.1','friction max'],['physics.restitution','restitution'],['physics.release.height_above_tip_mm.0','release height min'],['physics.release.height_above_tip_mm.1','release height max'],['physics.release.tilt_sigma_deg','tilt σ (deg)'],['physics.release.sideways_speed_sigma_mm_s','sideways speed σ (mm/s)'],['analysis.offsets_mm.step','offset step'],['analysis.offsets_mm.stop','offset max'],['analysis.releases_per_offset','releases per offset'],['analysis.seed','seed']]]];
+const getp=(o,path)=>path.split('.').reduce((a,k)=>a==null?a:a[k],o);
+function setp(o,path,v){const ks=path.split('.');let a=o;for(let i=0;i<ks.length-1;i++)a=a[ks[i]];a[ks[ks.length-1]]=v;}
+function buildForms(){
+  const fam=P.family;
+  document.getElementById('pf').innerHTML=`<div class="f">family<select id="fam">${['shoulder','nesting','cylinder'].map(f=>`<option ${f===fam?'selected':''}>${f}</option>`).join('')}</select></div>`+
+    PF[fam].map(k=>`<div class="f">${PL[k]||k}<input data-k="${k}" type="number" step="0.1" value="${P[k]}"></div>`).join('');
+  document.getElementById('fam').onchange=e=>{const f=e.target.value;P=Object.assign({},GEO.PRESETS[{shoulder:'S40',nesting:'N35',cylinder:'CYL'}[f]]);P.D=C.piece.diameter_mm;buildForms();update();};
+  document.querySelectorAll('#pf input').forEach(el=>el.oninput=()=>{P[el.dataset.k]=+el.value;if(el.dataset.k==='D')C.piece.diameter_mm=+el.value;update();});
+  for(const [id,fields] of CF){document.getElementById(id).innerHTML=fields.map(([p,l])=>{const v=getp(C,p);const isStr=typeof v==='string';return `<div class="f">${l}<input data-p="${p}" ${isStr?'':'type="number" step="any"'} value="${v==null?'':v}"></div>`;}).join('');}
+  document.querySelectorAll('#cf1 input,#cf2 input,#cf3 input').forEach(el=>el.oninput=()=>{const p=el.dataset.p;const old=getp(C,p);setp(C,p,typeof old==='string'?el.value:(el.value===''?null:+el.value));update();});
+}
+document.querySelectorAll('[data-p]').forEach(b=>{if(b.tagName==='BUTTON')b.onclick=()=>{P=Object.assign({},GEO.PRESETS[b.dataset.p]);P.D=C.piece.diameter_mm=GEO.PRESETS[b.dataset.p].D;buildForms();update();};});
+const f2=v=>(+v).toFixed(2);
+function update(){
+  const err=document.getElementById('gerr'); err.textContent='';
+  try{G=GEO.makePiece(P,C.physics.density_g_per_mm3);}catch(e){err.textContent='Not a valid piece: '+e.message;G=null;return;}
+  // section drawing
+  const sc=6,W=380,Hh=(G.seat+G.H)*sc+50,ox=W/2,oz=Hh-20;
+  const path=z0=>{const pr=G.profile,pts=pr.concat(pr.slice().reverse().map(([r,z])=>[-r,z]));return 'M'+pts.map(([x,z])=>`${(ox+x*sc).toFixed(1)},${(z0-z*sc).toFixed(1)}`).join('L')+'Z';};
+  document.getElementById('secsvg').innerHTML=`<svg viewBox="0 0 ${W} ${Hh}" width="100%" style="max-width:${W}px"><path d="${path(oz)}" fill="#b8322f" fill-opacity=".85" stroke="#7a1f1d"/><path d="${path(oz-G.seat*sc)}" fill="#3a3a3a" fill-opacity=".55" stroke="#222"/><line x1="0" y1="${oz}" x2="${W}" y2="${oz}" stroke="var(--axis)"/></svg>`;
+  const rows=[['height H',G.H],['grip band',G.band_h],['geometric capture',G.capture],['stack pitch',G.seat],['king height',G.king_h],['volume mm³',G.V],['mass g',G.m],['CoM height',G.zc]];
+  document.getElementById('sizes').innerHTML='<table>'+rows.map(([n,v])=>`<tr><th>${n}</th><td>${f2(v)}</td></tr>`).join('')+'</table>';
+  document.getElementById('checks').innerHTML='<table>'+GEO.checks(G,C).map(c=>`<tr><th>${c.id}</th><td><span class="${c.ok?'ok':(c.id==='finger_room'?'soft':'no')}">${c.ok?'pass':'fail'}</span> ${c.value} <span class="small">${c.limit}</span></td></tr>`).join('')+'</table>';
+  document.getElementById('v_hybrid').disabled=G.family==='nesting';
+  update3d();
+  document.getElementById('cjtext').value=JSON.stringify(C,null,1);
+}
+// ---- 3D view
+let R3=null;
+function init3d(){ if(typeof THREE==='undefined'){document.getElementById('v3note').textContent='3D view unavailable offline (three.js not loaded); everything else works.';return;}
+  const cv=document.getElementById('view3'); const r=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true}); r.setPixelRatio(Math.min(2,devicePixelRatio));
+  const s=new THREE.Scene(), cam=new THREE.PerspectiveCamera(35,1,1,1000); cam.up.set(0,0,1); cam.position.set(45,-80,45);
+  const ctl=new THREE.OrbitControls(cam,cv); ctl.target.set(0,0,14); ctl.update();
+  s.add(new THREE.HemisphereLight(0xffffff,0x667788,.8)); const dl=new THREE.DirectionalLight(0xffffff,.7); dl.position.set(50,-40,100); s.add(dl);
+  R3={r,s,cam,ctl,meshes:[]}; const rs=()=>{r.setSize(cv.clientWidth,cv.clientHeight,false);cam.aspect=cv.clientWidth/cv.clientHeight;cam.updateProjectionMatrix();}; rs(); addEventListener('resize',rs);
+  (function loop(){ctl.update();r.render(s,cam);requestAnimationFrame(loop);})(); }
+function update3d(){ if(!R3||!G) return; R3.meshes.forEach(m=>R3.s.remove(m)); R3.meshes=[];
+  const clip=new THREE.Plane(new THREE.Vector3(0,1,0),0); R3.r.localClippingEnabled=true;
+  [[0,0xb8322f],[G.seat,0x2e2e2e]].forEach(([z,col])=>{const geo=new THREE.LatheGeometry(G.profile.map(([r,zz])=>new THREE.Vector2(Math.max(r,0.001),zz)),72);geo.computeVertexNormals();
+    const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:col,roughness:.55,side:THREE.DoubleSide,clippingPlanes:[clip]}));m.rotation.x=Math.PI/2;m.position.z=z;R3.s.add(m);R3.meshes.push(m);}); }
+// ---- Monte Carlo (chunked so the page stays responsive)
+let curves={}, stopFlag=false;
+const VC={smooth:'var(--s1)',layered:'var(--s2)',hybrid:'var(--s3)'}, VN={smooth:'Smooth (CAD)',layered:'Printed layers',hybrid:'Printed, cone sanded'};
+function offsets(){const o=C.analysis.offsets_mm;const n=Math.round((o.stop-o.start)/o.step)+1;return Array.from({length:n},(_,k)=>+(o.start+k*o.step).toFixed(6));}
+document.getElementById('stop').onclick=()=>stopFlag=true;
+document.getElementById('run').onclick=async()=>{
+  if(!G) return; stopFlag=false; curves={};
+  const vs=['smooth','layered','hybrid'].filter(v=>document.getElementById('v_'+v).checked&&!document.getElementById('v_'+v).disabled);
+  const offs=offsets(), n=C.analysis.releases_per_offset, total=vs.length*offs.length*n; let done=0; const prog=document.getElementById('prog'), msg=document.getElementById('pmsg'); prog.max=total;
+  const t0=performance.now();
+  for(const v of vs){ const parts=GEO.section(G,v,C.printer.layer_mm); curves[v]=[];
+    for(let i=0;i<offs.length;i++){ const counts={seated:0,perched:0,fell:0,knocked:0};
+      for(const rel of SIM.sampleReleases(C.physics,C.analysis.seed,i,n)){
+        if(stopFlag){msg.textContent='stopped';drawChart();return;}
+        counts[SIM.simulate(G,parts,Object.assign({e:offs[i]},rel)).code]++; done++;
+        if(done%3===0){prog.value=done;const el=(performance.now()-t0)/1000;msg.textContent=`${v}, ${offs[i]} mm — ${Math.round(el)} s, about ${Math.round(el/done*(total-done))} s left`;await new Promise(r=>setTimeout(r,0));}}
+      curves[v].push({e:offs[i],counts}); drawChart(); } }
+  prog.value=total; msg.textContent=`done in ${Math.round((performance.now()-t0)/1000)} s`; drawChart();
+};
+function crossing(rows,n,level=0.5){for(let k=1;k<rows.length;k++){const a=rows[k-1].counts.seated/n,b=rows[k].counts.seated/n;if(a>=level&&b<level)return rows[k-1].e+(a-level)/(a-b)*(rows[k].e-rows[k-1].e);}return rows.length&&rows[0].counts.seated/n<level?null:(rows.length?rows[rows.length-1].e:null);}
+function interp(x,xs,ys){if(x>xs[xs.length-1])return 0;if(x<=xs[0])return ys[0];for(let k=1;k<xs.length;k++)if(x<=xs[k])return ys[k-1]+(ys[k]-ys[k-1])*(x-xs[k-1])/(xs[k]-xs[k-1]);return 0;}
+function stackRate(rows,n){const pe=C.gripper.placement_error,h=pe.resolution_mm/2,N=161,xs=rows.map(r=>r.e),ys=rows.map(r=>r.counts.seated/n);let s=0;
+  for(let i=0;i<N;i++)for(let j=0;j<N;j++){const x=((i+.5)/N*2-1)*h,y=((j+.5)/N*2-1)*h;s+=interp(Math.hypot(x,y),xs,ys);} return s/(N*N);}
+function drawChart(){
+  const svg=document.getElementById('chart'),W=900,H=360,m={l:54,r:20,t:12,b:48},D=G.R*2,xmax=50,n=C.analysis.releases_per_offset;
+  const xs=v=>m.l+v/xmax*(W-m.l-m.r), ys=v=>m.t+(1-v/100)*(H-m.t-m.b);
+  let g=''; for(let v=0;v<=100;v+=20) g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--line)"/><text x="${m.l-6}" y="${ys(v)+4}" text-anchor="end" style="fill:var(--ink2)">${v} %</text>`;
+  for(let v=0;v<=xmax;v+=10) g+=`<text x="${xs(v)}" y="${H-m.b+16}" text-anchor="middle" style="fill:var(--ink2)">${v} %</text><text x="${xs(v)}" y="${H-m.b+29}" text-anchor="middle" style="fill:var(--muted);font-size:10px">${(v*D/100).toFixed(1)} mm</text>`;
+  g+=`<text x="${(m.l+W-m.r)/2}" y="${H-4}" text-anchor="middle" style="fill:var(--ink2)">offset, % of diameter — releases that seat</text>`;
+  const res=[];
+  for(const [v,rows] of Object.entries(curves)){ if(!rows.length) continue; const P=rows.map(r=>[xs(100*r.e/D),ys(100*r.counts.seated/n)]);
+    g+=`<path d="M${P.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}" fill="none" stroke="${VC[v]}" stroke-width="2"/>`+P.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${VC[v]}" stroke="var(--surface)" stroke-width="2"/>`).join('');
+    const e50=crossing(rows,n); res.push(`<b>${VN[v]}</b>: 50 % at ${e50==null?'—':e50.toFixed(1)+' mm ('+Math.round(100*e50/D)+' % of Ø)'}; overall stack rate with ±${C.gripper.placement_error.resolution_mm/2} mm placement error: ${Math.round(100*stackRate(rows,n))} %`); }
+  svg.innerHTML=g; document.getElementById('cleg').innerHTML=Object.keys(curves).map(v=>`<span><svg width="24" height="10"><line x1="0" x2="24" y1="5" y2="5" stroke="${VC[v]}" stroke-width="2"/></svg> ${VN[v]}</span>`).join('');
+  document.getElementById('cres').innerHTML=res.join('<br>')+(res.length?`<br>${n} releases per offset (±${Math.round(98/Math.sqrt(n))} points at 50 %).`:'');
+}
+// ---- one release with replay
+let one=null,t1=0;
+document.getElementById('one').onclick=()=>{ if(!G) return; const v=document.getElementById('o_v').value; let parts;
+  try{parts=GEO.section(G,v,C.printer.layer_mm);}catch(e){document.getElementById('o_out').textContent=e.message;return;}
+  const sc={e:+o_e.value,mu:+o_mu.value,d:+o_d.value,tilt:+o_t.value,vx:+o_v0.value,rest:C.physics.restitution};
+  const r=SIM.simulate(G,parts,sc,{record:true}); one={r,parts}; t1=performance.now();
+  document.getElementById('o_out').innerHTML=` <b>${r.code}</b> — ${Math.abs(r.dx).toFixed(2)} mm off, tilt ${r.tilt.toFixed(1)}°`; };
+(function draw(now){ const cv=document.getElementById('sec'),ctx=cv.getContext('2d'),W=cv.clientWidth,H=cv.clientHeight,dpr=devicePixelRatio||1;
+  if(cv.width!==Math.round(W*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);} ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  if(one&&G){const fr=one.r.frames,tt=(now-t1)/1000/4;let i=0;while(i<fr.length-1&&fr[i+1][0]<=tt)i++;if(tt>fr[fr.length-1][0]+0.6)t1=now;const f=fr[i];
+    const z=document.getElementById('o_zoom').checked; const sc=z?Math.min(W,H)/9:Math.min(W/60,H/(G.H*2+4)), cx=z?f[4]*0.5:4, cz=z?G.H-1.5:G.H*0.85;
+    const X=x=>W/2+(x-cx)*sc,Z=q=>H/2-(q-cz)*sc;
+    [[f[1],f[2],f[3],'#b8322f'],[f[4],f[5],f[6],'#2e2e2e']].forEach(([bx,bz,ba,col])=>{const c=Math.cos(ba),s=Math.sin(ba);ctx.fillStyle=col;ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=z?1:.4;
+      for(const P of one.parts){ctx.beginPath();P.forEach(([px,pz],k)=>{const x=bx+c*px-s*pz,y=bz+s*px+c*pz;k?ctx.lineTo(X(x),Z(y)):ctx.moveTo(X(x),Z(y));});ctx.closePath();ctx.fill();ctx.stroke();}});
+    ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--ink2');ctx.font='12px system-ui';ctx.fillText('t = '+f[0].toFixed(3)+' s (slowed 4×)',10,18);}
+  requestAnimationFrame(draw);})(0);
+// ---- export and constraints JSON
+const xmsg=document.getElementById('xmsg');
+async function copy(text,what){try{await navigator.clipboard.writeText(text);xmsg.textContent=what+' copied.';}catch(e){xmsg.textContent='Copy was blocked by the browser.';}}
+document.getElementById('stlcopy').onclick=()=>G&&copy(GEO.stlAscii(G.profile,'piece'),'STL');
+document.getElementById('stldl').onclick=e=>{if(!G){e.preventDefault();return;} const b=new Blob([GEO.stlAscii(G.profile,'piece')],{type:'model/stl'}); e.currentTarget.href=URL.createObjectURL(b);};
+document.getElementById('pcopy').onclick=()=>copy(JSON.stringify(P,null,1),'Parameters');
+document.getElementById('cjcopy').onclick=()=>copy(JSON.stringify(C,null,1),'Constraints');
+function applyConstraints(txt){try{const c=JSON.parse(txt);C=Object.assign(C,c);if(c.piece)P.D=c.piece.diameter_mm;buildForms();update();xmsg.textContent='';}catch(e){alertBox('Could not read the constraints: '+e.message);}}
+function alertBox(t){document.getElementById('gerr').textContent=t;}
+document.getElementById('cjapply').onclick=()=>applyConstraints(document.getElementById('cjtext').value);
+document.getElementById('cjfile').onchange=e=>{const f=e.target.files[0];if(f)f.text().then(applyConstraints);};
+buildForms(); init3d(); update();
+</script>
+</body></html>

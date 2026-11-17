@@ -1,0 +1,26 @@
+[project]
+name = "stackpieces"
+version = "0.1.0"
+description = "Design and settling analysis of stackable, robot-placed game pieces (DD-STACK)"
+authors = [{ name = "Tico Hannan" }]
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "numba>=0.59", "mujoco>=3.1", "matplotlib>=3.7", "pandas>=2.0"]
+
+[project.optional-dependencies]
+notebooks = ["jupyterlab", "nbformat", "nbclient", "ipykernel"]
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["stackpieces"]
+
+[tool.setuptools.package-data]
+stackpieces = ["report_template.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

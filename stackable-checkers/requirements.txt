@@ -1,0 +1,11 @@
+# Wheels only: no compiler needed on Windows (WinPython 3.12) or Linux.
+numpy>=1.24
+numba>=0.59
+mujoco>=3.1
+matplotlib>=3.7
+pandas>=2.0
+# notebooks (WinPython already has these)
+jupyterlab
+nbformat
+nbclient
+ipykernel

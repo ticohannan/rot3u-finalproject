@@ -1,0 +1,62 @@
+{
+ "name": "checker_s40",
+ "units": "mm",
+ "_comment": "Stackable checker S40: grip band, 40 deg cone on a flat shoulder, matching socket underneath. Spec Z = piece axis, z = 0 on the bottom (bed) face.",
+ "params": {
+  "D": 25,
+  "HC": 12,
+  "SH": 2,
+  "TIP_D": 4,
+  "CONE_H": 10.13,
+  "CLR": 0.5,
+  "VCLR": 0.5,
+  "CT": 0.5,
+  "CB": 0.4,
+  "SLOPE": "(D/2 - SH - TIP_D/2) / CONE_H",
+  "MOUTH_D": "D - 2*SH + 2*CLR",
+  "SOCK_H": "CONE_H + VCLR",
+  "ROOF_D": "MOUTH_D - 2*SOCK_H*SLOPE"
+ },
+ "features": [
+  {
+   "id": "body",
+   "op": "revolve",
+   "axis": "z",
+   "angle": 360,
+   "profile": {
+    "turned": [
+     {"z": 0, "d": 0},
+     {"z": 0, "d": "D - 2*CB"},
+     {"z": "CB", "d": "D"},
+     {"z": "HC - CT", "d": "D"},
+     {"z": "HC", "d": "D - 2*CT"},
+     {"z": "HC", "d": "D - 2*SH"},
+     {"z": "HC + CONE_H", "d": "TIP_D"},
+     {"z": "HC + CONE_H", "d": 0}
+    ]
+   }
+  },
+  {
+   "id": "socket",
+   "op": "revolve_cut",
+   "axis": "z",
+   "angle": 360,
+   "profile": {
+    "turned": [
+     {"z": -0.5, "d": 0},
+     {"z": -0.5, "d": "MOUTH_D + 2*0.5*SLOPE"},
+     {"z": "SOCK_H", "d": "ROOF_D"},
+     {"z": "SOCK_H", "d": 0}
+    ]
+   }
+  }
+ ],
+ "release": {
+  "units": {"part": "MMGS"},
+  "material": "PLA",
+  "title_block": {"description": "STACKABLE CHECKER S40"},
+  "fab": {"machine": "x2d", "head": "left", "material": "PLA",
+          "orient": {"down": "-Z", "z0": "min"}, "supports": false, "compensate": "none"},
+  "after_build": {"leave_open": "part"}
+ }
+}

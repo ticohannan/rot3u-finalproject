@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+:root{--bg:#f6f5f1;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#8a8984;--line:#e1e0d9;--axis:#c3c2b7;
+--good:#0ca30c;--warn:#fab219;--serious:#ec835a;--crit:#d03b3b;--s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#6250d6}
+@media (prefers-color-scheme: dark){:root{--bg:#121211;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#8f8e88;--line:#2c2c2a;--axis:#383835;--s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#9085e9}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+h1{font-size:26px;margin:0 0 4px}h2{font-size:19px;margin:34px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+.sub{color:var(--ink2);margin:0 0 16px}.small{font-size:13px;color:var(--ink2)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}@media (max-width:860px){.stats{grid-template-columns:1fr 1fr}}
+.stat .n{font-size:26px;font-weight:650}.stat .l{color:var(--ink2);font-size:13px}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--ink2);font-weight:600}td.num{font-variant-numeric:tabular-nums}
+.ok{color:var(--good);font-weight:600}.no{color:var(--crit);font-weight:600}.soft{color:var(--warn);font-weight:600}
+.ctrls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:10px}
+.seg{display:inline-flex;border:1px solid var(--axis);border-radius:8px;overflow:hidden}
+.seg button{background:none;border:0;padding:5px 10px;color:var(--ink);font:inherit;font-size:13px;cursor:pointer;border-right:1px solid var(--axis)}
+.seg button:last-child{border-right:0}.seg button.on{background:var(--ink);color:var(--surface)}
+label.sl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
+.btn{border:1px solid var(--axis);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer}
+#view{width:100%;height:440px;border-radius:8px;display:block;background:linear-gradient(#e9eef3,#f7f7f4)}
+@media (prefers-color-scheme: dark){#view{background:linear-gradient(#1d2228,#151514)}}
+.dot{width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:-1px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink2);margin:6px 0}
+.map{display:grid;gap:2px;font-size:11.5px;align-items:center}
+.map .c{height:20px;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px}
+.map .c.w{color:#0b0b0b}.map .rl{color:var(--ink2);white-space:nowrap;padding-right:6px}.map .hd{color:var(--muted);text-align:center}
+#tip{position:fixed;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none;z-index:9;max-width:280px}
+svg text{fill:var(--ink);font:11px system-ui,sans-serif}
+code{font-size:12.5px}.foot{color:var(--muted);font-size:12px;margin-top:30px}
+</style>
+</head>
+<body><main>
+<h1 id="title"></h1>
+<p class="sub" id="subtitle"></p>
+<div class="card" id="summary"></div>
+
+<h2>Stacking rate against offset</h2>
+<div class="card">
+<div class="ctrls"><div class="seg" id="cdsel"></div></div>
+<div class="legend" id="cleg"></div>
+<svg id="chart" viewBox="0 0 900 390" width="100%" role="img" aria-label="Seat rate against offset"></svg>
+<p class="small" id="chartnote"></p>
+<details><summary class="small">Table view</summary><div id="ctable"></div></details>
+</div>
+
+<h2>Overall stack rate for the robot</h2>
+<div class="card"><p class="small" id="placenote"></p><div id="ptable"></div></div>
+
+<h2>Section replay (printed layers)</h2>
+<div class="card">
+<div class="ctrls">
+<label class="sl">Offset <input type="range" id="ro" min="0" max="12.5" step="0.5" value="3"><b id="rov"></b></label>
+<label class="sl"><input type="checkbox" id="rz"> Zoom on the contact</label>
+<button class="btn" id="rr">↻ Replay</button><span id="rout"></span></div>
+<canvas id="sec" style="width:100%;height:400px;display:block;border-radius:8px;background:var(--bg)"></canvas>
+<p class="small" id="rinfo"></p>
+</div>
+
+<h2>3D settling (MuJoCo)</h2>
+<div class="card">
+<div class="ctrls"><div class="seg" id="dsel"></div><div class="seg" id="ssel"></div></div>
+<div class="ctrls"><label class="sl">Offset <input type="range" id="eoff" min="0" max="12" step="1" value="4"><b id="eval"></b></label>
+<div class="seg" id="spd"><button data-s="1" class="on">1×</button><button data-s="0.25">¼×</button></div>
+<label class="sl"><input type="checkbox" id="cut" checked> Cut-away</label><button class="btn" id="replay">↻ Replay</button><span id="outcome"></span></div>
+<canvas id="view"></canvas>
+<p class="small" id="vinfo"></p>
+<div class="legend" id="leg"></div>
+<div id="maps"></div>
+</div>
+
+<h2>Design-space search</h2>
+<div class="card"><p class="small" id="searchnote"></p><div style="overflow-x:auto" id="stable"></div></div>
+
+<h2>Geometry and checks</h2>
+<div class="grid2" id="geo"></div>
+<div class="card" style="overflow-x:auto" id="spec"></div>
+
+<h2>Constraints used</h2>
+<div class="card" style="overflow-x:auto" id="ctab"></div>
+
+<h2>Method and limits</h2>
+<div class="card small" id="method"></div>
+<p class="foot" id="foot"></p>
+</main>
+<div id="tip"></div>
+<script>
+const R = __DATA__;
+const tip = document.getElementById('tip');
+const ST = {seated:{c:'var(--good)',i:'✓',l:'Seated'},perched:{c:'var(--warn)',i:'!',l:'Perched',w:1},fell:{c:'var(--crit)',i:'✕',l:'Fell off'},knocked:{c:'var(--serious)',i:'⚠',l:'Knocked the base piece'}};
+const VNAME = {smooth:'Smooth (CAD) surfaces', layered:'Printed layers', hybrid:'Printed, cone sanded'};
+const VCOL = {smooth:'var(--s1)', hybrid:'var(--s3)', layered:'var(--s2)'};
+const f1 = v => v == null ? '—' : (+v).toFixed(1), f2 = v => v == null ? '—' : (+v).toFixed(2), pct = v => Math.round(100 * v) + ' %';
+const D = R.constraints.piece.diameter_mm;
+function showTip(ev, h){ tip.innerHTML=h; tip.style.display='block'; tip.style.left=Math.min(ev.clientX+14, innerWidth-300)+'px'; tip.style.top=(ev.clientY+14)+'px'; }
+function hideTip(){ tip.style.display='none'; }
+
+// ---------- header and summary ----------
+document.getElementById('title').textContent = R.title;
+document.getElementById('subtitle').textContent = R.subtitle;
+(function(){
+  const ch = R.designs[R.chosen], s = R.metrics[R.chosen];
+  const goal = R.constraints.goal, tgt = goal.target_offset_fraction * (goal.target_offset_of === 'radius' ? D / 2 : D);
+  let h = `<b>${ch.label}.</b> ${R.summary_text}`;
+  h += `<div class="stats">
+  <div class="stat"><div class="n">${f1(s.layered.reliable)} mm</div><div class="l">printed: every offset up to here seats ≥ ${pct(goal.seat_rate_required)} of the time (${pct(s.layered.reliable / D)} of Ø)</div></div>
+  <div class="stat"><div class="n">${f1(s.layered.e50)} mm</div><div class="l">printed: half the releases seat (${pct((s.layered.e50||0) / D)} of Ø); smooth CAD ${f1(s.smooth.e50)} mm</div></div>
+  <div class="stat"><div class="n">${f1(tgt)} mm</div><div class="l">goal: ${pct(goal.target_offset_fraction)} of the ${goal.target_offset_of}; printed seat rate there ${pct(s.layered.rate_at_target)}</div></div>
+  <div class="stat"><div class="n">${pct(R.placement[R.chosen].layered)}</div><div class="l">of king stacks seat with the robot's placement error (${R.placement_label})</div></div></div>`;
+  document.getElementById('summary').innerHTML = h;
+})();
+
+// ---------- stacking-rate chart ----------
+let cdes = R.chosen;
+function drawChart(){
+  const svg=document.getElementById('chart'), W=900, H=390, m={l:58,r:30,t:14,b:52};
+  const cur = R.curves[cdes]; const xmax = 50;
+  const xs=v=>m.l+(v/xmax)*(W-m.l-m.r), ys=v=>m.t+(1-v/100)*(H-m.t-m.b);
+  const ser=[];
+  ['smooth','hybrid','layered'].forEach(v=>{ if(cur[v]) ser.push({v,name:VNAME[v],c:VCOL[v],codes:['seated']}); });
+  if(cur.layered) ser.push({v:'layered',name:'Printed: stays on top (seated or perched)',c:VCOL.layered,codes:['seated','perched'],dash:true});
+  let g='';
+  for(let v=0;v<=100;v+=20) g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--line)"/><text x="${m.l-8}" y="${ys(v)+4}" text-anchor="end" style="fill:var(--ink2)">${v} %</text>`;
+  for(let v=0;v<=xmax;v+=10) g+=`<text x="${xs(v)}" y="${H-m.b+18}" text-anchor="middle" style="fill:var(--ink2)">${v} %</text><text x="${xs(v)}" y="${H-m.b+32}" text-anchor="middle" style="fill:var(--muted);font-size:10px">${(v*D/100).toFixed(1)} mm</text>`;
+  g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${ys(0)}" y2="${ys(0)}" stroke="var(--axis)"/><text x="${(m.l+W-m.r)/2}" y="${H-6}" text-anchor="middle" style="fill:var(--ink2)">offset of the released piece, % of diameter (mm below)</text>`;
+  g+=`<text transform="translate(14,${(m.t+H-m.b)/2}) rotate(-90)" text-anchor="middle" style="fill:var(--ink2)">releases</text>`;
+  const goal=R.constraints.goal, tf=goal.target_offset_fraction*(goal.target_offset_of==='radius'?50:100);
+  g+=`<line x1="${xs(tf)}" x2="${xs(tf)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--muted)" stroke-dasharray="2 4"/><text x="${xs(tf)+4}" y="${m.t+12}" style="fill:var(--muted)">goal</text>`;
+  ser.forEach(s=>{
+    const rows=cur[s.v].rows, n=cur[s.v].n;
+    const P=rows.map(r=>[xs(100*r.e/D), ys(100*s.codes.reduce((a,c)=>a+r.counts[c],0)/n)]);
+    g+=`<path d="M${P.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join('L')}" fill="none" stroke="${s.c}" stroke-width="2" ${s.dash?'stroke-dasharray="6 4"':''}/>`;
+    if(!s.dash) P.forEach(p=>g+=`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${s.c}" stroke="var(--surface)" stroke-width="2"/>`);
+  });
+  g+=`<line id="xl" y1="${m.t}" y2="${H-m.b}" stroke="var(--ink2)" stroke-dasharray="3 3" style="display:none"/><rect id="hit" x="${m.l}" y="${m.t}" width="${W-m.l-m.r}" height="${H-m.t-m.b}" fill="transparent"/>`;
+  svg.innerHTML=g;
+  document.getElementById('cleg').innerHTML=ser.map(s=>`<span><svg width="26" height="10"><line x1="0" x2="26" y1="5" y2="5" stroke="${s.c}" stroke-width="2" ${s.dash?'stroke-dasharray="6 4"':''}/></svg> ${s.name}</span>`).join('');
+  const hit=svg.querySelector('#hit'), xl=svg.querySelector('#xl');
+  hit.onmousemove=ev=>{const r=svg.getBoundingClientRect(),x=(ev.clientX-r.left)*W/r.width;const p=Math.max(0,Math.min(xmax,(x-m.l)/(W-m.l-m.r)*xmax));
+    const anyRows=cur[ser[0].v].rows; let best=anyRows[0]; anyRows.forEach(q=>{if(Math.abs(100*q.e/D-p)<Math.abs(100*best.e/D-p)) best=q;});
+    xl.setAttribute('x1',xs(100*best.e/D)); xl.setAttribute('x2',xs(100*best.e/D)); xl.style.display='';
+    let h=`<b>${best.e.toFixed(1)} mm = ${(100*best.e/D).toFixed(0)} % of Ø</b>`;
+    ser.forEach(s=>{const q=cur[s.v].rows.find(z=>Math.abs(z.e-best.e)<1e-6); if(q) h+=`<br><span class="dot" style="background:${s.c}"></span> ${s.name}: ${Math.round(100*s.codes.reduce((a,c)=>a+q.counts[c],0)/cur[s.v].n)} %`;});
+    showTip(ev,h);};
+  hit.onmouseleave=()=>{hideTip(); xl.style.display='none';};
+  const v0=ser[0].v, rows=cur[v0].rows;
+  document.getElementById('ctable').innerHTML='<table><tr><th>offset mm</th><th>% of Ø</th>'+ser.map(s=>`<th>${s.name}</th>`).join('')+'</tr>'+rows.map(r=>'<tr><td class="num">'+r.e.toFixed(1)+'</td><td class="num">'+Math.round(100*r.e/D)+' %</td>'+ser.map(s=>{const q=cur[s.v].rows.find(z=>Math.abs(z.e-r.e)<1e-6);return '<td class="num">'+(q?Math.round(100*s.codes.reduce((a,c)=>a+q.counts[c],0)/cur[s.v].n)+' %':'—')+'</td>';}).join('')+'</tr>').join('')+'</table>';
+  const n = cur[v0].n;
+  document.getElementById('chartnote').innerHTML = `${R.designs[cdes].label}. Each point: ${n} releases (±${Math.round(98/Math.sqrt(n))} points at 50 %, 95 %). Releases draw friction μ ${R.constraints.physics.friction_range.join('–')}, height ${R.constraints.physics.release.height_above_tip_mm.join('–')} mm above the cone tip, tilt ${R.constraints.physics.release.tilt_sigma_deg}° and sideways speed ${R.constraints.physics.release.sideways_speed_sigma_mm_s} mm/s (1σ). 2D section model; printed layers ${R.constraints.printer.layer_mm} mm.`;
+}
+document.getElementById('cdsel').innerHTML=Object.keys(R.curves).map(k=>`<button data-k="${k}" class="${k===cdes?'on':''}">${k}</button>`).join('');
+document.getElementById('cdsel').onclick=e=>{if(e.target.dataset.k){cdes=e.target.dataset.k;document.querySelectorAll('#cdsel button').forEach(b=>b.classList.toggle('on',b.dataset.k===cdes));drawChart();}};
+drawChart();
+
+// ---------- placement ----------
+(function(){
+  document.getElementById('placenote').textContent = `Expected fraction of king stacks that seat on the first release when the arm's placement error is ${R.placement_label}. The arm lands within 2.5 mm of the axis ${pct(R.placement_cdf[0])}, within 5 mm ${pct(R.placement_cdf[1])}, within 7.5 mm ${pct(R.placement_cdf[2])} of the time.`;
+  const vs=['smooth','hybrid','layered'];
+  document.getElementById('ptable').innerHTML='<table><tr><th>design</th>'+vs.map(v=>`<th>${VNAME[v]}</th>`).join('')+'</tr>'+Object.keys(R.placement).map(k=>'<tr><th>'+R.designs[k].label+'</th>'+vs.map(v=>'<td class="num">'+(R.placement[k][v]!=null?pct(R.placement[k][v]):'—')+'</td>').join('')+'</tr>').join('')+'</table>';
+})();
+
+// ---------- section replay ----------
+(function(){
+  const cv=document.getElementById('sec'), ctx=cv.getContext('2d'), ro=document.getElementById('ro'), rz=document.getElementById('rz');
+  const rows=R.curves[R.chosen].layered.rows, layers=R.layers; let run=null, t0=0;
+  ro.max = rows[rows.length-1].e; ro.step = rows.length>1 ? (rows[1].e-rows[0].e) : 1;
+  function pick(){ const e=+ro.value; run=rows.find(r=>Math.abs(r.e-e)<1e-6); t0=performance.now();
+    document.getElementById('rov').textContent=e.toFixed(1)+' mm ('+Math.round(100*e/D)+' % of Ø)';
+    if(!run||!run.replay){document.getElementById('rinfo').textContent='No replay recorded at this offset.';return;}
+    const rp=run.replay, st=ST[rp.code];
+    document.getElementById('rout').innerHTML=`<span class="dot" style="background:${st.c}"></span> ${st.i} ${rp.code==='perched'?'Perched, tilted '+rp.tilt.toFixed(0)+'°':st.l}`;
+    document.getElementById('rinfo').textContent=`First of the ${R.curves[R.chosen].layered.n} releases at ${e.toFixed(1)} mm: μ ${rp.release.mu.toFixed(2)}, ${rp.release.d.toFixed(2)} mm above the tip, tilt ${rp.release.tilt.toFixed(1)}°, sideways ${rp.release.vx.toFixed(0)} mm/s. Slowed 4×. Red: piece on the board; dark: released piece; each band is one printed layer.`; }
+  ro.oninput=pick; document.getElementById('rr').onclick=()=>t0=performance.now();
+  function draw(now){
+    const W=cv.clientWidth,H=cv.clientHeight,dpr=devicePixelRatio||1; if(cv.width!==Math.round(W*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);}
+    ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+    if(run&&run.replay){
+      const fr=run.replay.frames, tt=(now-t0)/1000/4; let i=0; while(i<fr.length-1&&fr[i+1][0]<=tt) i++; if(tt>fr[fr.length-1][0]+0.6) t0=now;
+      const f=fr[i], Hh=R.designs[R.chosen].H; let sc,cx,cz;
+      if(rz.checked){sc=Math.min(W,H)/9; cx=f[4]*0.5; cz=Hh-1.5;} else {sc=Math.min(W/60,H/(Hh*2+4)); cx=4; cz=Hh*0.85;}
+      const X=x=>W/2+(x-cx)*sc, Z=z=>H/2-(z-cz)*sc;
+      ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--axis'); ctx.beginPath(); ctx.moveTo(0,Z(0)); ctx.lineTo(W,Z(0)); ctx.stroke();
+      [[f[1],f[2],f[3],'#b8322f'],[f[4],f[5],f[6],'#2e2e2e']].forEach(([bx,bz,ba,col])=>{const c=Math.cos(ba),s=Math.sin(ba);ctx.fillStyle=col;ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=rz.checked?1:0.4;
+        for(const P of layers){ctx.beginPath();P.forEach(([px,pz],k)=>{const x=bx+c*px-s*pz,z=bz+s*px+c*pz;k?ctx.lineTo(X(x),Z(z)):ctx.moveTo(X(x),Z(z));});ctx.closePath();ctx.fill();ctx.stroke();}});
+      ctx.font='12px system-ui'; ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--surface'); ctx.fillRect(4,4,rz.checked?300:90,20);
+      ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--ink2'); ctx.fillText('t = '+f[0].toFixed(3)+' s'+(rz.checked?'   (zoom: about 9 mm across)':''),10,18);
+    }
+    requestAnimationFrame(draw);
+  }
+  pick(); requestAnimationFrame(draw);
+})();
+
+// ---------- 3D replay and outcome maps ----------
+const M3 = R.map3d, dkeys = Object.keys(M3);
+let cur = {d: dkeys.includes(R.chosen) ? R.chosen : dkeys[0], s: 'place', e: 4, speed: 1};
+const SCN = {place:'Gentle place', drop10:'Drop 10 mm', tilt10:'Tilted 10°', slide:'Moving 50 mm/s'};
+function stLabel(r){ if(r.code==='perched'&&r.tilt<3) return 'Stacked off-center ('+r.dxy.toFixed(1)+' mm, flat)'; if(r.code==='perched') return 'Perched, tilted '+r.tilt.toFixed(0)+'°, '+r.dxy.toFixed(1)+' mm off'; return ST[r.code].l; }
+document.getElementById('leg').innerHTML=Object.entries(ST).map(([k,v])=>`<span><span class="dot" style="background:${v.c}"></span> ${v.i} ${v.l}</span>`).join('');
+(function(){
+  let mh='';
+  for(const dk of dkeys){ const mp=M3[dk];
+    mh+=`<h3>${R.designs[dk].label}</h3><div style="overflow-x:auto"><div class="map" style="grid-template-columns:150px repeat(${mp.offsets.length},minmax(26px,1fr))"><div></div>${mp.offsets.map(e=>`<div class="hd">${e}</div>`).join('')}`;
+    for(const s of Object.keys(mp.scenarios)) for(const mu of mp.mus){ const row=mp.results[s+'|'+mu];
+      mh+=`<div class="rl">${SCN[s]||s} · μ ${mu}</div>`+row.map((r,i)=>`<div class="c${ST[r.code].w?' w':''}" style="background:${ST[r.code].c}" data-d="${dk}" data-s="${s}" data-mu="${mu}" data-i="${i}">${ST[r.code].i}</div>`).join(''); }
+    mh+=`<div></div><div class="hd" style="grid-column:2/-1">offset (mm)</div></div></div>`; }
+  document.getElementById('maps').innerHTML=mh;
+  document.querySelectorAll('.map .c').forEach(el=>{
+    el.onmousemove=ev=>{const mp=M3[el.dataset.d], r=mp.results[el.dataset.s+'|'+el.dataset.mu][+el.dataset.i];
+      showTip(ev,`<b>${el.dataset.d} · ${SCN[el.dataset.s]} · μ ${el.dataset.mu} · ${mp.offsets[+el.dataset.i]} mm</b><br>${ST[r.code].i} ${stLabel(r)}<br>tilt ${r.tilt.toFixed(1)}°, height ${r.dz.toFixed(2)} mm (seat ${R.designs[el.dataset.d].seat.toFixed(2)})`);};
+    el.onmouseleave=hideTip;
+    el.onclick=()=>{cur.d=el.dataset.d;cur.s=el.dataset.s;cur.e=M3[cur.d].offsets[+el.dataset.i];sync();load3d();};
+  });
+})();
+const dsel=document.getElementById('dsel'), ssel=document.getElementById('ssel'), eoff=document.getElementById('eoff');
+dsel.innerHTML=dkeys.map(k=>`<button data-k="${k}">${k}</button>`).join('');
+ssel.innerHTML=Object.keys(SCN).map(k=>`<button data-k="${k}">${SCN[k]}</button>`).join('');
+dsel.onclick=e=>{if(e.target.dataset.k){cur.d=e.target.dataset.k;sync();load3d();}};
+ssel.onclick=e=>{if(e.target.dataset.k){cur.s=e.target.dataset.k;sync();load3d();}};
+eoff.oninput=()=>{cur.e=+eoff.value;sync();load3d();};
+document.getElementById('spd').onclick=e=>{if(e.target.dataset.s){cur.speed=+e.target.dataset.s;document.querySelectorAll('#spd button').forEach(b=>b.classList.toggle('on',b===e.target));t3=performance.now();}};
+document.getElementById('replay').onclick=()=>t3=performance.now();
+function sync(){dsel.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k===cur.d));ssel.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.k===cur.s));eoff.max=M3[cur.d].offsets[M3[cur.d].offsets.length-1];eoff.value=cur.e;document.getElementById('eval').textContent=cur.e+' mm';}
+let renderer, scene, camera, controls, bodies=[], frames=[], t3=0, clip;
+function lathe(dk,color){ const d=R.designs[dk];
+  const geo=new THREE.LatheGeometry(d.profile.map(([r,z])=>new THREE.Vector2(Math.max(r,0.001),z)),72); geo.computeVertexNormals();
+  const m=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color,roughness:.55,side:THREE.DoubleSide,clippingPlanes:[clip]})); m.rotation.x=Math.PI/2; m.castShadow=true;
+  const inner=new THREE.Group(); inner.add(m); inner.position.z=-d.zc; const g=new THREE.Group(); g.add(inner); return g; }
+function init3d(){
+  if(typeof THREE==='undefined'){document.getElementById('vinfo').textContent='3D view needs an internet connection (three.js from cdnjs); the outcome maps below work offline.';return false;}
+  const canvas=document.getElementById('view');
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true}); renderer.localClippingEnabled=true; renderer.shadowMap.enabled=true; renderer.setPixelRatio(Math.min(2,devicePixelRatio));
+  scene=new THREE.Scene(); camera=new THREE.PerspectiveCamera(35,1,1,2000); camera.up.set(0,0,1); camera.position.set(38,-78,42);
+  controls=new THREE.OrbitControls(camera,canvas); controls.target.set(0,0,17); controls.update();
+  scene.add(new THREE.HemisphereLight(0xffffff,0x667788,.75)); const dl=new THREE.DirectionalLight(0xffffff,.8); dl.position.set(60,-40,120); dl.castShadow=true; scene.add(dl);
+  const c=document.createElement('canvas'); c.width=c.height=512; const g=c.getContext('2d'); const sq=R.constraints.board.square_mm;
+  for(let i=0;i<8;i++)for(let j=0;j<8;j++){g.fillStyle=(i+j)%2?'#e8dfc8':'#3d6b4a';g.fillRect(i*64,j*64,64,64);}
+  const board=new THREE.Mesh(new THREE.PlaneGeometry(8*sq,8*sq),new THREE.MeshStandardMaterial({map:new THREE.CanvasTexture(c),roughness:.9}));
+  board.position.set(-sq/2,-sq/2,-0.01); board.receiveShadow=true; scene.add(board);
+  clip=new THREE.Plane(new THREE.Vector3(0,1,0),0);
+  const rs=()=>{const w=canvas.clientWidth,h=canvas.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}; rs(); addEventListener('resize',rs);
+  document.getElementById('cut').onchange=e=>{clip.constant=e.target.checked?0:1e4;};
+  requestAnimationFrame(tick3); return true;
+}
+function load3d(){
+  const mp=M3[cur.d], i=mp.offsets.indexOf(cur.e); const r=mp.results[cur.s+'|'+mp.record_mu][i]; const st=ST[r.code];
+  document.getElementById('outcome').innerHTML=`<span class="dot" style="background:${st.c}"></span> ${st.i} ${stLabel(r)}`;
+  document.getElementById('vinfo').textContent=`${R.designs[cur.d].label}. ${mp.scenarios[cur.s]}. μ ${mp.record_mu}. Drag to orbit, scroll to zoom.`;
+  if(!scene) return; bodies.forEach(b=>scene.remove(b)); bodies=[lathe(cur.d,0xb8322f),lathe(cur.d,0x2e2e2e)]; bodies.forEach(b=>scene.add(b));
+  frames=mp.frames[cur.s+'|'+cur.e]||[]; t3=performance.now();
+}
+function tick3(now){
+  if(frames.length){const t=(now-t3)/1000*cur.speed,n=frames.length; let i=Math.floor(t*M3[cur.d].fps); if(t>n/M3[cur.d].fps+0.8){t3=now;i=0;} i=Math.min(n-1,Math.max(0,i)); const f=frames[i];
+    [0,1].forEach(k=>{const a=f.slice(7*k,7*k+7);bodies[k].position.set(a[0],a[1],a[2]);bodies[k].quaternion.set(a[3],a[4],a[5],a[6]);});}
+  controls.update(); renderer.render(scene,camera); requestAnimationFrame(tick3);
+}
+sync(); init3d(); load3d();
+
+// ---------- search ----------
+(function(){
+  const S=R.search; const pass=S.filter(r=>r.passes), fail=S.filter(r=>!r.passes);
+  const why={}; fail.forEach(r=>{const k=(r.reasons[0]||'?').split(':')[0]; why[k]=(why[k]||0)+1;});
+  document.getElementById('searchnote').innerHTML=`${S.length} candidates from the constraints; ${pass.length} pass every hard check (finger room is reported but not used, until the finger thickness is measured). Rejected: ${Object.entries(why).map(([k,v])=>k+' '+v).join(', ')}. Ranked by smooth-surface capture (largest offset that seats on a gentle release at every offset, μ ${((R.constraints.physics.friction_range[0]+R.constraints.physics.friction_range[1])/2).toFixed(2)}), then height. Finalists were rerun with printed layers: <b>printed 50 %</b> column.`;
+  const top=pass.slice(0,15).concat(S.filter(r=>R.highlight.includes(r.name)&&!pass.slice(0,15).includes(r)));
+  document.getElementById('stable').innerHTML='<table><tr><th>#</th><th>candidate</th><th>family</th><th>H</th><th>band</th><th>geometric capture</th><th>smooth capture</th><th>printed 50 %</th><th>printed ≥ '+pct(R.constraints.goal.seat_rate_required)+'</th><th>passes</th></tr>'+
+   top.map(r=>`<tr><td class="num">${S.indexOf(r)+1}</td><th>${r.name}${R.highlight.includes(r.name)?' ◀':''}</th><td>${r.params.family}</td><td class="num">${f1(r.H)}</td><td class="num">${f1(r.band_h)}</td><td class="num">${f1(r.capture_geom)}</td><td class="num">${f1(r.capture_smooth)}</td><td class="num">${r.printed?f2(r.printed.e50):'—'}</td><td class="num">${r.printed?f1(r.printed.reliable):'—'}</td><td>${r.passes?'<span class="ok">yes</span>':'<span class="no">'+r.reasons.join('; ')+'</span>'}</td></tr>`).join('')+'</table>';
+})();
+
+// ---------- geometry ----------
+(function(){
+  let gh='';
+  for(const dk of Object.keys(R.designs)){ const d=R.designs[dk], sc=6, W=380, Hh=Math.max(280,(d.seat+d.H)*sc+60), ox=W/2-5, oz=Hh-30, Rr=d.R;
+    const path=(oz0)=>{const pr=d.profile, pts=pr.concat(pr.slice().reverse().map(([r,z])=>[-r,z]));return 'M'+pts.map(([x,z])=>`${(ox+x*sc).toFixed(1)},${(oz0-z*sc).toFixed(1)}`).join('L')+'Z';};
+    let s=`<svg viewBox="0 0 ${W} ${Hh}" width="100%" style="max-width:${W}px"><path d="${path(oz)}" fill="#b8322f" fill-opacity=".85" stroke="#7a1f1d"/><path d="${path(oz-d.seat*sc)}" fill="#3a3a3a" fill-opacity=".55" stroke="#222"/>`;
+    s+=`<line x1="0" y1="${oz}" x2="${W}" y2="${oz}" stroke="var(--axis)"/><line x1="${ox}" y1="${oz+6}" x2="${ox}" y2="${oz-(d.seat+d.H)*sc-6}" stroke="var(--muted)" stroke-dasharray="6 3 1 3"/>`;
+    s+=`<text x="10" y="16" style="font-weight:600">${dk}: section, two stacked</text><text x="10" y="32">H ${f2(d.H)} · band ${f1(d.band_h)} · pitch ${f2(d.seat)} · king ${f2(d.king_h)} · Ø${f1(2*Rr)}</text></svg>`;
+    gh+=`<div class="card">${s}</div>`; }
+  document.getElementById('geo').innerHTML=gh;
+  const ks=Object.keys(R.designs), rows=[['family',k=>R.designs[k].family],['height H',k=>f2(R.designs[k].H)],['grip band',k=>f1(R.designs[k].band_h)],['cone half-angle',k=>R.designs[k].params.alpha?R.designs[k].params.alpha+'°':'—'],['tip Ø',k=>R.designs[k].params.tip_d?f1(R.designs[k].params.tip_d):'—'],['socket mouth Ø',k=>R.designs[k].Rm?f2(2*R.designs[k].Rm):'—'],['geometric capture',k=>f2(R.designs[k].capture)],['stack pitch / king',k=>f2(R.designs[k].seat)+' / '+f2(R.designs[k].king_h)],['volume, mass',k=>Math.round(R.designs[k].V)+' mm³, '+f2(R.designs[k].m)+' g'],['CoM height',k=>f2(R.designs[k].zc)]];
+  let t='<table><tr><th>mm unless noted</th>'+ks.map(k=>`<th>${R.designs[k].label}</th>`).join('')+'</tr>'+rows.map(([n,fn])=>'<tr><th>'+n+'</th>'+ks.map(k=>'<td class="num">'+fn(k)+'</td>').join('')+'</tr>').join('');
+  const ids=[...new Set(ks.flatMap(k=>R.designs[k].checks.map(c=>c.id)))];
+  t+=ids.map(id=>'<tr><th>check: '+id+'</th>'+ks.map(k=>{const c=R.designs[k].checks.find(x=>x.id===id);if(!c)return'<td>—</td>';const cls=c.ok?'ok':(id==='finger_room'?'soft':'no');return `<td><span class="${cls}">${c.ok?'pass':'fail'}</span> ${c.value} <span class="small">(${c.limit})</span></td>`;}).join('')+'</tr>').join('')+'</table>';
+  document.getElementById('spec').innerHTML=t;
+})();
+
+// ---------- constraints, method, footer ----------
+(function(){
+  const rows=[]; const walk=(o,pre)=>{for(const [k,v] of Object.entries(o)){ if(k.startsWith('_')) continue; const note=o['_'+k]||'';
+    if(v&&typeof v==='object'&&!Array.isArray(v)) { if(['placement_error','offsets_mm','release'].includes(k)) rows.push([pre+k,JSON.stringify(v),note]); else walk(v,pre+k+'.'); }
+    else rows.push([pre+k,Array.isArray(v)?v.join(' – '):String(v),note]); }};
+  walk(R.constraints,'');
+  document.getElementById('ctab').innerHTML='<table><tr><th>key</th><th>value</th><th>note / source</th></tr>'+rows.map(r=>`<tr><th><code>${r[0]}</code></th><td class="num">${r[1]}</td><td class="small">${r[2]}</td></tr>`).join('')+'</table>';
+  document.getElementById('method').innerHTML=R.method_html;
+  document.getElementById('foot').textContent=`Generated by stackpieces ${R.meta.version} on ${R.meta.date} from ${R.meta.constraints} (sha256 ${R.meta.constraints_hash}), Python ${R.meta.python}, seed ${R.meta.seed}. Author: Tico Hannan.`;
+})();
+</script>
+</body></html>
