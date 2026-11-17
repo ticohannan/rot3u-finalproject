@@ -20,6 +20,7 @@ versions with more tracking joints (`demo4-3servo`, `demo4-4servo`, `demo4-5serv
 | `firmware/servo_bridge/` | Minimal sketch the notebook drives: smooth, limited moves to pulse targets; input shaping | v0.1 ran on the arm; v0.3 tested on a PC simulation |
 | `firmware/servo_tester/` | Joint mapping: measure each joint's pulse-to-angle line and safe range, export a `robot_config.h` block | v3.0, from `ticohannan/rot3u-robots`; mapping commands not yet run on hardware |
 | `robots/` | One `robot_config.h` per arm: `sir_pinch_a_lot_revB/` (Tico's arm A), `template/` for a new arm | |
+| `tools/apriltag-checkerboard/` | Printable checkers board with four AprilTags (`tag36h11`, IDs 0 to 3) and orientation arrows, US Letter or A4, folded and taped from several pages; directions in its README | v1.0.0, tested on the PC; not yet run on WinPython or printed |
 | `docs/` | `GETTING-STARTED.md`, `joint-mapping.md` (full mapping reference), `rot3u-conventions.md` (DH model and angle conventions) | |
 
 Related repositories: [`ticohannan/rot3u-robots`](https://github.com/ticohannan/rot3u-robots) (firmware,
